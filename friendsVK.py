@@ -1,114 +1,61 @@
 import requests
-from pprint import pprint
 import time
 import json
 
-TOKEN = "958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008"  # input("Введите токен ")
-
-USER_id = 171691064  # input("Введите id пользователя " )
+TOKEN = input("Введите токен ") # "958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008"
+USER_id = input("Введите id пользователя ") # "171691064" 18526683
 
 
 class USER:
+
     def __init__(self, TOKEN):
-        # Параметры для запроса groups.get
         self.token = TOKEN
-        self.params = {
-            'access_token': TOKEN,
-            'v': 5.107,
-            "user_id": USER_id}
         return
 
-    def get_response(self):
-        response = requests.get(
-            'https://api.vk.com/method/groups.get', params=self.params)
-        res = response.json()
-        if "error" not in res:
-            #time.sleep(1)
-       # else:
-            data = response.json()['response']['items']
-            return data
-
     def get_groups(self):
-        a = set()
-        data = self.get_response()
+        groupset = set()       
+        response = requests.post('https://api.vk.com/method/execute?access_token='+TOKEN+'&v=5.107&code=return API.groups.get({"user_id":"'+USER_id+'","count":"1000"});')
+        data = response.json()['response']['items']
         for i in data:
-            a.add(i)
-        return a
+            groupset.add(i)
+        return groupset
 
     def get_friends(self):
-        params = self.params
-        params["order"] = "name"
-        params["fields"] = "domain"
-        response = requests.get(
-            "https://api.vk.com/method/friends.get", params=params)
-        get_items = response.json()["response"]["items"]
-        # Получаем список id друзей
-        list_of_friends = []
-        for i in get_items:
-            #time.sleep(0.5)
-            get_id = i["id"]
-            list_of_friends.append(get_id)
-        return list_of_friends
+        friendset = set()
+        response = requests.post('https://api.vk.com/method/execute?access_token='+TOKEN+'&v=5.107&code=return API.friends.get({"user_id":"'+USER_id+'","count":"1000","extended": 0, "order":"name"});')
+        data = response.json()['response']['items']
+        for i in data:
+            friendset.add(i)
+        return friendset
 
     def get_friends_groups(self):
-        # Получаем список групп
-        b = set()
-        list_of_friends = self.get_friends()
-        try:
-            for i in list_of_friends:
-                params = self.params
-                params["user_id"] = i
-                params["count"] = "1000"
-                data = self.get_response()
-                for i in data:
-                    b.add(i)
-        except TypeError:
-            return b
+        groups_friend_set = set()
+        groups = self.get_groups()        
+        for i in self.get_friends():
+            time.sleep(0.5)
+            response = requests.post('https://api.vk.com/method/execute?access_token='+TOKEN+'&v=5.107&code=return API.groups.get({"user_id":"'+str(i)+'","count":"1000","extended": 0});')
+            data_fr = response.json()
+            if 'response' in data_fr.keys():
+                data = response.json()['response']['items']
+                for group_id in data:
+                    if group_id in groups:
+                        groups_friend_set.add(group_id)
+        return groups_friend_set
 
-
-    def get_json(self):
-        set_of_id = Evg.get_groups() & Evg.get_friends_groups()
+    def get_json_file(self):
         gotten_groups = []
-        # ПОЛУЧАЕМ ID ГРУПП
-        for i in set_of_id:
-            params = self.params
-            params["group_id"] = i
-            params["count"] = '5'
-
-            response = requests.get(
-                'https://api.vk.com/method/groups.getMembers', params=params)
-            members_count = response.json()
-            for i in members_count:
-                time.sleep(0.5)
-                members_count_list = members_count["response"]["count"]
-                merged = {"members_count": members_count_list}
-        # ПОЛУЧАЕМ ДАННЫЕ ГРУПП
-            params = {
-                'access_token': TOKEN,
-                'v': 5.107,
-                "group_ids": i
-                }
-            response = requests.get(
-                    'https://api.vk.com/method/groups.getById', params=params)
-            data = response.json()
+        for i in self.get_friends_groups():
+            r = requests.post('https://api.vk.com/method/execute?access_token='+TOKEN+'&v=5.107&code=return API.groups.getById({"group_ids":"'+str(i)+'","fields":"members_count"});')
+            data = r.json()['response']
+            time.sleep(0.5)
             for i in data:
-                time.sleep(0.5)
-                res = response.json()["response"]
+                vk_dict = {"name": i["name"], "gid": i['id'], "members_count": i['members_count']}
+                gotten_groups.append(vk_dict)
+        with open('groups.json', 'w', encoding='UTF-8') as f:
+            json.dump(gotten_groups, f, ensure_ascii=False, sort_keys=True, indent=2)
 
-            for i in res:
-                name = i.get("name")
-                group_id = i.get("id")
-                dict_of_same_groups = {"name": name, 
-                "gid": group_id}
-                dict_of_same_groups.update(merged)
-                gotten_groups.append(dict_of_same_groups)
+        return gotten_groups
 
-        # with open('groups.json', 'w',encoding = 'UTF-8') as f:
-        #    json.dump(gotten_groups,f,ensure_ascii = False, sort_keys=True, indent=2)
-            return gotten_groups
+Evg = USER(TOKEN)
 
-Evg=USER(TOKEN)
-print(Evg.get_groups())
-#Evg.get_friends()
-#print(Evg.get_friends_groups())
-#print(Evg.get_json())
+print(Evg.get_json_file())

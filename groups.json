@@ -1,12 +1,22 @@
 [
   {
+    "gid": 125927592,
+    "members_count": 155281,
+    "name": "Depeche Mode"
+  },
+  {
     "gid": 35486626,
-    "members_count": 874944,
+    "members_count": 875578,
     "name": "Другая Музыка"
   },
   {
     "gid": 27683540,
-    "members_count": 85174,
+    "members_count": 85339,
     "name": "E:\\music\\trip-hop"
+  },
+  {
+    "gid": 4100014,
+    "members_count": 550465,
+    "name": "Новые Альбомы"
   }
 ]
