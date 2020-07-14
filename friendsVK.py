@@ -3,8 +3,8 @@ import time
 import json
 
 
-TOKEN = input("Введите токен ") 
-USER_id = input("Введите пользователя ") 
+TOKEN = "958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008" #input("Введите токен ") 
+USER_id = 'eshmargunov' #input("Введите пользователя ") 
 
 start_time = time.time()
 class USER:
@@ -51,7 +51,8 @@ class USER:
                 for group_id in data:
                     if group_id in groups:
                         groups_friend_set.add(group_id)
-        return groups_friend_set
+        unic_groups = groups.difference(groups_friend_set)
+        return unic_groups
 
     def get_json_file(self):
         gotten_groups = []
